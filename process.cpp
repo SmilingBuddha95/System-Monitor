@@ -2,20 +2,64 @@
 #include <cctype>
 #include <sstream>
 #include <string>
+#include <fstream>
 
 #include "process.h"
 #include "linux_parser.h"
 #include "format.h"
+#include "system.h"
 
 using std::string;
 using std::to_string;
 using std::vector;
+using std::stol;
 
 // TODO: Return this process's ID
 int Process::Pid() { return pid_; }
 
 // TODO: Return this process's CPU utilization
-float Process::CpuUtilization() { return 0; }
+float Process::CpuUtilization() {
+  string pidNum = to_string(Process::Pid());
+  string line, value;
+  long int uptime = LinuxParser::UpTime();
+  long int utime, stime, cutime, cstime, starttime;
+  float cpu_usage;
+
+  std::ifstream proc_Cpu_File(LinuxParser::kProcDirectory + pidNum + LinuxParser::kStatFilename);
+  if(proc_Cpu_File.is_open())
+  {
+    std::getline(proc_Cpu_File,line);
+    std::istringstream linestream(line);
+
+    for(int i = 0; i < 22; i++)
+    {
+        linestream >> value;
+
+        switch (i) {
+          case 13:
+            utime = stol(value);
+            break;
+          case 14:
+            stime = stol(value);
+            break;
+          case 15:
+            cutime = stol(value);
+            break;
+          case 16:
+            cstime = stol(value);
+            break;
+          case 21:
+            starttime = stol(value);
+            break;
+        }
+    }
+    long int total_time = utime + stime;
+    total_time = total_time + cutime + cstime;
+    long int seconds = uptime - (starttime / sysconf(_SC_CLK_TCK));
+    cpu_usage = 100 * ((total_time / sysconf(_SC_CLK_TCK)) / seconds);
+  }
+  return cpu_usage;
+}
 
 // TODO: Return the command that generated this process
 string Process::Command() {
@@ -24,7 +68,10 @@ string Process::Command() {
 }
 
 // TODO: Return this process's memory utilization
-string Process::Ram() { return string(); }
+string Process::Ram() {
+  int pid = Process::Pid();
+  return LinuxParser::Ram(pid);
+}
 
 // TODO: Return the user (name) that generated this process
 string Process::User() {

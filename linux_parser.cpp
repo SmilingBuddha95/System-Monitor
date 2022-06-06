@@ -7,6 +7,7 @@
 #include "linux_parser.h"
 
 using std::stof;
+using std::stol;
 using std::string;
 using std::to_string;
 using std::vector;
@@ -118,7 +119,7 @@ vector<string> LinuxParser::CpuUtilization()
   string cpu_label, data_label;
   std:: vector<string> cpu_stat{};
 
-  std::ifstream cpuFile("/proc/stat");
+  std::ifstream cpuFile(kProcDirectory + kStatFilename);
   if(cpuFile.is_open()){
     std::getline(cpuFile,line);
     std::istringstream linestream(line);
@@ -189,9 +190,27 @@ string LinuxParser::Command(int pid) {
   return command;
 }
 
-// TODO: Read and return the memory used by a process
-// REMOVE: [[maybe_unused]] once you define the function
-string LinuxParser::Ram(int pid[[maybe_unused]]) { return string(); }
+string LinuxParser::Ram(int pid) {
+  string pidNum = to_string(pid);
+  string label, value, line;
+  std::ifstream RamFile(kProcDirectory + pidNum + kStatusFilename);
+  if(RamFile.is_open())
+  {
+    while(std::getline(RamFile,line))
+    {
+      std::istringstream linestream(line);
+      while(linestream >> label >> value)
+      {
+        if(label == "VmSize:")
+        {
+
+          return to_string(stol(value)/1024);
+        }
+      }
+    }
+  }
+  return "1";
+}
 
 string LinuxParser::Uid(int pid) {
   string pidNum = to_string(pid);
