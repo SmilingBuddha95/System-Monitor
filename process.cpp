@@ -21,8 +21,8 @@ int Process::Pid() { return pid_; }
 float Process::CpuUtilization() {
   string pidNum = to_string(Process::Pid());
   string line, value;
-  long int uptime = LinuxParser::UpTime();
-  long int utime, stime, cutime, cstime, starttime;
+  float uptime = LinuxParser::UpTime();
+  float utime, stime, cutime, cstime, starttime;
   float cpu_usage;
 
   std::ifstream proc_Cpu_File(LinuxParser::kProcDirectory + pidNum + LinuxParser::kStatFilename);
@@ -53,10 +53,10 @@ float Process::CpuUtilization() {
             break;
         }
     }
-    long int total_time = utime + stime;
+    float total_time = utime + stime;
     total_time = total_time + cutime + cstime;
-    long int seconds = uptime - (starttime / sysconf(_SC_CLK_TCK));
-    cpu_usage = 100 * ((total_time / sysconf(_SC_CLK_TCK)) / seconds);
+    float seconds = uptime - (starttime / sysconf(_SC_CLK_TCK));
+    cpu_usage = (total_time / sysconf(_SC_CLK_TCK)) / seconds;
   }
   return cpu_usage;
 }
